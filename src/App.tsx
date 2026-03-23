@@ -325,9 +325,9 @@ export default function App() {
                   <button 
                     onClick={prevStep}
                     disabled={currentQuestionIndex === 0}
-                    className="text-white/40 hover:text-white disabled:opacity-0 transition-colors font-medium text-[14px]"
+                    className="text-white/60 hover:text-white disabled:opacity-0 transition-colors font-medium text-[16px] flex items-center gap-2"
                   >
-                    Anterior
+                    Voltar
                   </button>
                   <PillButton 
                     variant="white"

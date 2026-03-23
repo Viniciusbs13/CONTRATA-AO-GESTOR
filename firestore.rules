@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: submissions
+    // Document ID: auto-generated
+    // Fields:
+    //   - nome: string (required)
+    //   - idade: string
+    //   - telefone: string (required)
+    //   - tem_experiencia: string
+    //   - nichos: string
+    //   - investimento: string
+    //   - cases: string
+    //   - tempo: string
+    //   - plataformas: string
+    //   - estrutura: string
+    //   - leitura: string
+    //   - pixels: string
+    //   - funil: string
+    //   - diagnostico: string
+    //   - alinhamento: string
+    //   - expectativa: string
+    //   - carteira: string
+    //   - comunicacao: string
+    //   - relatorios: string
+    //   - contrato: string
+    //   - falha: string
+    //   - conflito: string
+    //   - baixa: string
+    //   - submittedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidSubmission(data) {
+      return data.keys().hasAll(['nome', 'telefone', 'submittedAt']) &&
+             data.nome is string && data.nome.size() > 0 && data.nome.size() < 200 &&
+             data.telefone is string && data.telefone.size() > 0 && data.telefone.size() < 50 &&
+             data.submittedAt is timestamp;
+    }
+
+    match /submissions/{submissionId} {
+      // Allow anyone to create a submission (public quiz)
+      // In a real production app, you might want to rate limit this or require auth
+      // but for a recruitment landing page, public create is often needed.
+      allow create: if isValidSubmission(request.resource.data);
+      
+      // Only admins can read submissions
+      allow read, list: if isAuthenticated() && isAdmin();
+      
+      // No updates or deletes allowed for submissions once sent
+      allow update, delete: if false;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "assessoriaomega1@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

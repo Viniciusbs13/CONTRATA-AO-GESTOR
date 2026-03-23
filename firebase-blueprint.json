@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "QuizSubmission": {
+      "title": "Quiz Submission",
+      "description": "A submission of the recruitment quiz by a potential candidate.",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string", "description": "Candidate's full name" },
+        "idade": { "type": "string", "description": "Candidate's age" },
+        "telefone": { "type": "string", "description": "Candidate's phone/WhatsApp" },
+        "tem_experiencia": { "type": "string", "description": "Experience as traffic manager" },
+        "nichos": { "type": "string", "description": "Worked niches" },
+        "investimento": { "type": "string", "description": "Max monthly investment" },
+        "cases": { "type": "string", "description": "Results cases" },
+        "tempo": { "type": "string", "description": "Time working as traffic manager" },
+        "plataformas": { "type": "string", "description": "Mastered platforms" },
+        "estrutura": { "type": "string", "description": "Campaign structure process" },
+        "leitura": { "type": "string", "description": "Data reading process" },
+        "pixels": { "type": "string", "description": "Pixel configuration skill" },
+        "funil": { "type": "string", "description": "Leads/conversion experience" },
+        "diagnostico": { "type": "string", "description": "Diagnosis process" },
+        "alinhamento": { "type": "string", "description": "Funnel alignment process" },
+        "expectativa": { "type": "string", "description": "Low budget handling" },
+        "carteira": { "type": "string", "description": "Simultaneous clients" },
+        "comunicacao": { "type": "string", "description": "Communication availability" },
+        "relatorios": { "type": "string", "description": "Report frequency" },
+        "contrato": { "type": "string", "description": "Contract/CNPJ status" },
+        "falha": { "type": "string", "description": "Failure case" },
+        "conflito": { "type": "string", "description": "Competitor handling" },
+        "baixa": { "type": "string", "description": "Low performance handling" },
+        "submittedAt": { "type": "string", "format": "date-time", "description": "Timestamp of submission" }
+      },
+      "required": ["nome", "telefone", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "/submissions/{submissionId}": {
+      "schema": "QuizSubmission",
+      "description": "Collection of quiz submissions"
+    }
+  }
+}

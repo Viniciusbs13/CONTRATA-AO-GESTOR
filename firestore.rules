@@ -17,6 +17,8 @@ service cloud.firestore {
     //   - cases: string
     //   - tempo: string
     //   - plataformas: string
+    //   - plataformas_gerenciamento: string
+    //   - expectativa_salarial: string
     //   - estrutura: string
     //   - leitura: string
     //   - pixels: string

@@ -14,6 +14,8 @@
         "cases": { "type": "string", "description": "Results cases" },
         "tempo": { "type": "string", "description": "Time working as traffic manager" },
         "plataformas": { "type": "string", "description": "Mastered platforms" },
+        "plataformas_gerenciamento": { "type": "string", "description": "Management platforms" },
+        "expectativa_salarial": { "type": "string", "description": "Salary expectation" },
         "estrutura": { "type": "string", "description": "Campaign structure process" },
         "leitura": { "type": "string", "description": "Data reading process" },
         "pixels": { "type": "string", "description": "Pixel configuration skill" },

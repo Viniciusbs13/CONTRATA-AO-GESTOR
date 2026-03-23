@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { db } from './firebase';
-import { collection, addDoc, serverTimestamp, getDocFromServer, doc } from 'firebase/firestore';
+import { collection, setDoc, doc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 
 // ... inside App component or before it ...
 
@@ -55,11 +55,13 @@ const QUESTIONS: Question[] = [
   // 🎯 Experiência e Histórico
   { id: 'nichos', category: 'Experiência e Histórico', question: 'Quais nichos você já trabalhou?', type: 'textarea', placeholder: 'Ex: E-commerce, Infoprodutos, Local...' },
   { id: 'investimento', category: 'Experiência e Histórico', question: 'Qual foi o maior investimento mensal gerenciado?', type: 'text', placeholder: 'R$ 0,00' },
-  { id: 'cases', category: 'Experiência e Histórico', question: 'Pode compartilhar cases com resultados reais?', type: 'textarea', placeholder: 'Descreva brevemente seus melhores resultados...' },
+  { id: 'cases', category: 'Experiência e Histórico', question: 'Pode compartilhar cases com resultados reais? (O examinador solicitará esses resultados durante a entrevista)', type: 'textarea', placeholder: 'Descreva brevemente seus melhores resultados...' },
   { id: 'tempo', category: 'Experiência e Histórico', question: 'Há quanto tempo trabalha como gestor de tráfego?', type: 'select', options: ['Menos de 1 ano', '1-2 anos', '2-5 anos', 'Mais de 5 anos'] },
 
   // 📊 Competências Técnicas
   { id: 'plataformas', category: 'Competências Técnicas', question: 'Quais plataformas você domina?', type: 'textarea', placeholder: 'Meta Ads, Google Ads, TikTok Ads...' },
+  { id: 'plataformas_gerenciamento', category: 'Competências Técnicas', question: 'Quais plataformas de gerenciamento você sabe utilizar?', type: 'textarea', placeholder: 'Ex: Trello, ClickUp, Slack, CRM...' },
+  { id: 'expectativa_salarial', category: 'Dados Pessoais', question: 'Qual sua expectativa salarial?', type: 'text', placeholder: 'R$ 0,00' },
   { id: 'estrutura', category: 'Competências Técnicas', question: 'Como você estrutura uma campanha do zero?', type: 'textarea' },
   { id: 'leitura', category: 'Competências Técnicas', question: 'Como você faz a leitura de dados?', type: 'textarea' },
   { id: 'pixels', category: 'Competências Técnicas', question: 'Configura pixels e eventos sozinho?', type: 'radio', options: ['Sim, tudo', 'Dependo de suporte', 'Apenas o básico'] },
@@ -144,7 +146,11 @@ export default function App() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'submissions'), {
+      const timestamp = Date.now();
+      const candidateName = answers['nome']?.replace(/\s+/g, '_') || 'Candidato';
+      const docId = `${candidateName}_${timestamp}`;
+      
+      await setDoc(doc(db, 'submissions', docId), {
         ...answers,
         submittedAt: serverTimestamp()
       });
@@ -364,10 +370,23 @@ export default function App() {
               </div>
               
               <h2 className="text-[40px] md:text-[56px] font-medium mb-8 text-gradient">Aplicação Concluída</h2>
-              <p className="text-[18px] text-white/70 mb-12 leading-relaxed">
+              <p className="text-[18px] text-white/70 mb-8 leading-relaxed">
                 Obrigado, <span className="text-white font-bold">{answers['nome']}</span>. 
                 Analisaremos seu potencial e entraremos em contato em breve.
               </p>
+
+              <div className="mb-12">
+                <p className="text-white/50 text-[14px] mb-4 uppercase tracking-widest font-bold">Acompanhe nosso trabalho</p>
+                <a 
+                  href="https://www.instagram.com/assessoria.omega?igsh=c3Ewa2FxcWtvZnNy&utm_source=qr" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] px-8 py-4 rounded-full text-white font-bold hover:scale-105 transition-transform shadow-lg"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                  Seguir no Instagram
+                </a>
+              </div>
               
               <PillButton variant="white" onClick={() => window.location.reload()}>
                 Voltar ao Início

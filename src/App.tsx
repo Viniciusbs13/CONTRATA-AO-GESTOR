@@ -154,6 +154,12 @@ export default function App() {
         ...answers,
         submittedAt: serverTimestamp()
       });
+      
+      // Track Meta Pixel Lead event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead');
+      }
+
       setStep('success');
     } catch (error) {
       console.error("Error saving submission:", error);

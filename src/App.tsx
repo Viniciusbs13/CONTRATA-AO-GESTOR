@@ -9,11 +9,117 @@ import {
   ChevronDown, 
   ArrowRight, 
   CheckCircle2, 
-  Send
+  Send,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from './lib/utils';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { collection, setDoc, doc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+
+// --- Error Handling ---
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo, null, 2));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+// --- Error Boundary ---
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  errorInfo: string | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, errorInfo: error.message };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center p-6 text-center">
+          <div className="glass-card p-10 rounded-[32px] max-w-md">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-white mb-4">Algo deu errado</h2>
+            <p className="text-white/60 mb-8">
+              Ocorreu um erro inesperado. Por favor, recarregue a página ou tente novamente mais tarde.
+            </p>
+            <PillButton variant="white" onClick={() => window.location.reload()}>
+              Recarregar Página
+            </PillButton>
+            {process.env.NODE_ENV === 'development' && (
+              <pre className="mt-8 p-4 bg-white/5 rounded-lg text-left text-[10px] text-red-400 overflow-auto max-h-40">
+                {this.state.errorInfo}
+              </pre>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // ... inside App component or before it ...
 
@@ -117,6 +223,14 @@ const Navbar = () => (
 );
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+}
+
+function AppContent() {
   const [step, setStep] = useState<'hero' | 'quiz' | 'success'>('hero');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -145,10 +259,13 @@ export default function App() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    const timestamp = Date.now();
+    const candidateName = answers['nome']?.replace(/\s+/g, '_') || 'Candidato';
+    const docId = `${candidateName}_${timestamp}`;
+    const path = `submissions/${docId}`;
+
     try {
-      const timestamp = Date.now();
-      const candidateName = answers['nome']?.replace(/\s+/g, '_') || 'Candidato';
-      const docId = `${candidateName}_${timestamp}`;
+      console.log("Attempting to save submission:", { docId, answers });
       
       await setDoc(doc(db, 'submissions', docId), {
         ...answers,
@@ -162,8 +279,7 @@ export default function App() {
 
       setStep('success');
     } catch (error) {
-      console.error("Error saving submission:", error);
-      alert("Ocorreu um erro ao enviar sua aplicação. Por favor, tente novamente.");
+      handleFirestoreError(error, OperationType.WRITE, path);
     } finally {
       setIsSubmitting(false);
     }
